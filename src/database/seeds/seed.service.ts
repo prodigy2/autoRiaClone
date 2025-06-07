@@ -229,66 +229,111 @@ export class SeedService {
     }
   }
 
-  async seedUsers(): Promise<void> {
-    // Ottieni il ruolo seller
-    const sellerRole = await this.rolesRepository.findOne({
-      where: { name: 'seller' },
+async seedUsers(): Promise<void> {
+  // Ottieni i ruoli
+  const sellerRole = await this.rolesRepository.findOne({ where: { name: 'seller' } });
+  const adminRole = await this.rolesRepository.findOne({ where: { name: 'admin' } });
+  const managerRole = await this.rolesRepository.findOne({ where: { name: 'manager' } });
+
+  if (!sellerRole) {
+    throw new Error('Ruolo seller non trovato. Eseguire prima il seed dei ruoli.');
+  }
+  if (!adminRole) {
+    throw new Error('Ruolo admin non trovato. Eseguire prima il seed dei ruoli.');
+  }
+  if (!managerRole) {
+    throw new Error('Ruolo manager non trovato. Eseguire prima il seed dei ruoli.');
+  }
+
+  // Crea utente amministratore
+  const adminEmail = 'admin@example.com';
+  let existingUser = await this.usersRepository.findOne({ where: { email: adminEmail } });
+  if (!existingUser) {
+    const hashedPassword = await bcrypt.hash('password', 10);
+    const adminUser = this.usersRepository.create({
+      email: adminEmail,
+      password: hashedPassword,
+      firstName: 'Admin',
+      lastName: 'User',
+      isActive: true,
+      accountType: 'internal',
+      roles: [adminRole],
+    });
+    await this.usersRepository.save(adminUser);
+    console.log('Utente amministratore creato con successo');
+  } else {
+    console.log('Utente amministratore già esistente, saltato');
+  }
+
+  // Crea utente manager
+  const managerEmail = 'manager@example.com';
+  existingUser = await this.usersRepository.findOne({ where: { email: managerEmail } });
+  if (!existingUser) {
+    const hashedPassword = await bcrypt.hash('password', 10);
+    const managerUser = this.usersRepository.create({
+      email: managerEmail,
+      password: hashedPassword,
+      firstName: 'Manager',
+      lastName: 'User',
+      isActive: true,
+      accountType: 'internal',
+      roles: [managerRole],
+    });
+    await this.usersRepository.save(managerUser);
+    console.log('Utente manager creato con successo');
+  } else {
+    console.log('Utente manager già esistente, saltato');
+  }
+  // Crea 5 utenti normali
+  for (let i = 1; i <= 5; i++) {
+    const username = `user${i}`;
+    const existingUser = await this.usersRepository.findOne({
+      where: { email: `${username}@example.com` },
     });
 
-    if (!sellerRole) {
-      throw new Error('Ruolo seller non trovato. Eseguire prima il seed dei ruoli.');
-    }
-
-    // Crea 5 utenti normali
-    for (let i = 1; i <= 5; i++) {
-      const username = `user${i}`;
-      const existingUser = await this.usersRepository.findOne({
-        where: { email: `${username}@example.com` },
+    if (!existingUser) {
+      const hashedPassword = await bcrypt.hash('password', 10);
+      const user = this.usersRepository.create({
+        email: `${username}@example.com`,
+        password: hashedPassword,
+        firstName: `Nome${i}`,
+        lastName: `Cognome${i}`,
+        isActive: true,
+        accountType: 'base',
+        roles: [sellerRole],
       });
-
-      if (!existingUser) {
-        const hashedPassword = await bcrypt.hash(username, 10);
-        const user = this.usersRepository.create({
-          email: `${username}@example.com`,
-          password: hashedPassword,
-          firstName: `Nome${i}`,
-          lastName: `Cognome${i}`,
-          isActive: true,
-          accountType: 'base',
-          roles: [sellerRole],
-        });
-        await this.usersRepository.save(user);
-        console.log(`Utente normale ${username} creato con successo`);
-      } else {
-        console.log(`Utente normale ${username} già esistente, saltato`);
-      }
-    }
-
-    // Crea 5 utenti premium
-    for (let i = 1; i <= 5; i++) {
-      const username = `premiumuser${i}`;
-      const existingUser = await this.usersRepository.findOne({
-        where: { email: `${username}@example.com` },
-      });
-
-      if (!existingUser) {
-        const hashedPassword = await bcrypt.hash(username, 10);
-        const user = this.usersRepository.create({
-          email: `${username}@example.com`,
-          password: hashedPassword,
-          firstName: `PremiumNome${i}`,
-          lastName: `PremiumCognome${i}`,
-          isActive: true,
-          accountType: 'premium',
-          roles: [sellerRole],
-        });
-        await this.usersRepository.save(user);
-        console.log(`Utente premium ${username} creato con successo`);
-      } else {
-        console.log(`Utente premium ${username} già esistente, saltato`);
-      }
+      await this.usersRepository.save(user);
+      console.log(`Utente normale ${username} creato con successo`);
+    } else {
+      console.log(`Utente normale ${username} già esistente, saltato`);
     }
   }
+
+  // Crea 5 utenti premium
+  for (let i = 1; i <= 5; i++) {
+    const username = `premiumuser${i}`;
+    const existingUser = await this.usersRepository.findOne({
+      where: { email: `${username}@example.com` },
+    });
+
+    if (!existingUser) {
+      const hashedPassword = await bcrypt.hash('password', 10);
+      const user = this.usersRepository.create({
+        email: `${username}@example.com`,
+        password: hashedPassword,
+        firstName: `PremiumNome${i}`,
+        lastName: `PremiumCognome${i}`,
+        isActive: true,
+        accountType: 'premium',
+        roles: [sellerRole],
+      });
+      await this.usersRepository.save(user);
+      console.log(`Utente premium ${username} creato con successo`);
+    } else {
+      console.log(`Utente premium ${username} già esistente, saltato`);
+    }
+  }
+}
 
   async seedCarAds(): Promise<void> {
     // Ottieni tutti gli utenti normali

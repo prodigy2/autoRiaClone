@@ -32,7 +32,7 @@ export class User {
   isActive: boolean;
 
   @Column({ default: 'base' })
-  accountType: 'base' | 'premium';
+  accountType: 'base' | 'premium' | 'internal';
 
   @ManyToMany(() => Role)
   @JoinTable()
