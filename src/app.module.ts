@@ -29,7 +29,7 @@ import { NotificationsModule } from './notifications/notifications.module';
         database: configService.get('DATABASE_NAME', 'autoria'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: configService.get<boolean>('DATABASE_SYNCHRONIZE', true),
-        logging: configService.get<boolean>('DATABASE_LOGGING', false),
+        logging: configService.get<boolean>('DATABASE_LOGGING', true),
       }),
     }),
     AuthModule,
